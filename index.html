@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Shanghai Bingo Match · 上海宾果消消乐</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+:root{
+  --cream:#f6f1de; --cream2:#ece4c8; --card:#fffdf4;
+  --ink:#17494f; --ink2:#0e3339;
+  --coral:#e07856; --coral2:#c25a38;
+  --gold:#f2b134; --teal-lt:#2a6b74;
+}
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+html,body{margin:0;padding:0;}
+body{
+  background:var(--cream); color:var(--ink);
+  font-family:"Avenir Next","Segoe UI",system-ui,-apple-system,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  display:flex; justify-content:center; min-height:100vh;
+  user-select:none; -webkit-user-select:none; -webkit-touch-callout:none;
+  overflow-x:hidden;
+}
+#app{width:100%; max-width:520px; padding:14px 14px 40px;}
+.hidden{display:none !important;}
+h1,h2,.px{font-family:"Press Start 2P","Courier New",monospace;}
+
+/* ---------- menu ---------- */
+#screen-menu{text-align:center; padding-top:18px;}
+.game-logo{font-size:15px; line-height:1.9; color:var(--ink); margin:6px 0 2px;
+  text-shadow:2px 2px 0 var(--cream2);}
+.game-logo .coral{color:var(--coral);}
+.tagline{font-size:14px; color:var(--teal-lt); margin:0 0 4px;}
+.tagline-cn{font-size:13px; color:#6b7f82; margin:0 0 16px;}
+.howto{background:var(--card); border:3px solid var(--ink); border-radius:10px;
+  padding:12px 14px; text-align:left; font-size:13px; line-height:1.85; margin:0 0 16px;
+  box-shadow:4px 4px 0 var(--cream2);}
+.howto b{color:var(--coral2);}
+.theme-card{background:var(--card); border:3px solid var(--ink); border-radius:12px;
+  margin:0 0 14px; padding:14px; box-shadow:5px 5px 0 var(--cream2); text-align:center;}
+.theme-prev{display:flex; justify-content:center; gap:10px; margin-bottom:10px;}
+.theme-prev img{image-rendering:pixelated;width:72px; height:72px; border-radius:14px; border:3px solid var(--ink);
+  background:#fff; object-fit:cover;}
+.theme-name{font-family:"Press Start 2P","Courier New",monospace; font-size:12px; margin-bottom:6px;}
+.theme-cn{font-size:14px; font-weight:700; color:var(--teal-lt); margin-bottom:6px;}
+.theme-desc{font-size:12.5px; color:#5c6f72; line-height:1.6; margin-bottom:12px;}
+.btn{display:inline-block; font-family:"Press Start 2P","Courier New",monospace; font-size:13px;
+  background:var(--coral); color:#fff; border:3px solid var(--ink2); border-radius:8px;
+  padding:12px 22px; cursor:pointer; box-shadow:0 4px 0 var(--ink2); text-decoration:none;}
+.btn:active{transform:translateY(3px); box-shadow:0 1px 0 var(--ink2);}
+.btn.teal{background:var(--teal-lt);}
+.btn.ghost{background:var(--card); color:var(--ink);}
+.menu-foot{margin-top:18px; font-size:11px; color:#8a9a9c;}
+.menu-foot a{color:var(--teal-lt);}
+
+/* ---------- game HUD ---------- */
+#hud{display:flex; align-items:stretch; gap:8px; margin-bottom:10px;}
+.hud-box{flex:1; background:var(--card); border:3px solid var(--ink); border-radius:10px;
+  text-align:center; padding:7px 4px; box-shadow:3px 3px 0 var(--cream2);}
+.hud-label{font-size:10px; letter-spacing:1px; color:#6b7f82; margin-bottom:2px;}
+.hud-val{font-family:"Press Start 2P","Courier New",monospace; font-size:13px;}
+.hud-val small{font-size:9px; color:#6b7f82;}
+#hud-moves.low{color:var(--coral2); animation:pulse 1s infinite;}
+@keyframes pulse{50%{transform:scale(1.12);}}
+.icon-btn{flex:0 0 52px; background:var(--card); border:3px solid var(--ink); border-radius:10px;
+  font-size:20px; cursor:pointer; box-shadow:3px 3px 0 var(--cream2);}
+.icon-btn:active{transform:translateY(2px); box-shadow:none;}
+
+/* ---------- board ---------- */
+#board-wrap{position:relative; margin-bottom:12px;}
+#board{position:relative; width:100%; aspect-ratio:1/1; background:var(--cream2);
+  border:4px solid var(--ink); border-radius:14px; overflow:hidden; touch-action:none;
+  box-shadow:5px 5px 0 rgba(23,73,79,.15);}
+.tile{position:absolute; top:0; left:0; width:12.5%; height:12.5%; padding:3px;
+  transition:transform .22s ease; will-change:transform; cursor:pointer;}
+.tile.no-anim{transition:none !important;}
+.tile img{image-rendering:pixelated;width:100%; height:100%; object-fit:cover; border-radius:16%; display:block;
+  background:#fff; border:2px solid rgba(23,73,79,.25); pointer-events:none;}
+.tile.selected img{outline:3px solid var(--coral); outline-offset:-1px; transform:scale(1.08);
+  box-shadow:0 0 10px var(--coral);}
+.tile.popping img{animation:pop .24s ease-in forwards;}
+@keyframes pop{40%{transform:scale(1.18); opacity:1;} 100%{transform:scale(0); opacity:0;}}
+.tile.star img{box-shadow:0 0 12px var(--gold); border-color:var(--gold);}
+.star-badge{position:absolute; top:-2px; right:-2px; font-size:17px; color:var(--gold);
+  text-shadow:-1px -1px 0 var(--ink2),1px -1px 0 var(--ink2),-1px 1px 0 var(--ink2),1px 1px 0 var(--ink2);
+  pointer-events:none; line-height:1;}
+.star-badge.born{animation:starpop .35s ease-out;}
+@keyframes starpop{0%{transform:scale(0) rotate(-90deg);} 70%{transform:scale(1.4) rotate(10deg);} 100%{transform:scale(1);}}
+.float-score{position:absolute; z-index:30; font-family:"Press Start 2P","Courier New",monospace;
+  font-size:11px; color:var(--coral2); text-shadow:1px 1px 0 #fff; pointer-events:none;
+  animation:floatup .9s ease-out forwards;}
+@keyframes floatup{to{transform:translateY(-34px); opacity:0;}}
+.combo-flash{position:absolute; left:50%; top:38%; transform:translate(-50%,-50%) scale(.6);
+  z-index:30; font-family:"Press Start 2P","Courier New",monospace; font-size:15px; color:var(--gold);
+  text-shadow:2px 2px 0 var(--ink2); pointer-events:none; opacity:0;}
+.combo-flash.show{animation:comboin .8s ease-out;}
+@keyframes comboin{20%{opacity:1; transform:translate(-50%,-50%) scale(1.15);} 100%{opacity:0; transform:translate(-50%,-60%) scale(1);}}
+
+/* ---------- bingo panel ---------- */
+#bingo-panel{background:var(--card); border:3px solid var(--ink); border-radius:12px;
+  padding:10px 10px 12px; box-shadow:4px 4px 0 var(--cream2); margin-bottom:8px;}
+.bingo-title{font-family:"Press Start 2P","Courier New",monospace; font-size:10px; text-align:center;
+  margin-bottom:8px;}
+.bingo-title span{color:var(--coral2);}
+#bingo-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:6px;}
+.bingo-cell{position:relative; border:2px solid var(--ink); border-radius:8px; background:#fff;
+  padding:4px; text-align:center; overflow:hidden;}
+.bingo-cell img{width:100%; aspect-ratio:1/1; object-fit:cover; border-radius:6px; display:block;}
+.bingo-label{font-size:9px; font-weight:700; margin-top:3px; line-height:1.25; min-height:22px;}
+.bingo-count{font-size:9px; color:#6b7f82;}
+.bingo-stamp{position:absolute; inset:0; background:rgba(224,120,86,.82); color:#fff;
+  font-size:30px; display:flex; align-items:center; justify-content:center;
+  opacity:0; transform:scale(2.2); transition:all .25s ease; font-weight:900;}
+.bingo-cell.stamped .bingo-stamp{opacity:1; transform:scale(1) rotate(-8deg);}
+.bingo-cell.bingo-line{border-color:var(--gold); box-shadow:0 0 8px var(--gold);}
+.bingo-hint{text-align:center; font-size:11px; color:#6b7f82; margin-top:8px; line-height:1.6;}
+
+/* ---------- toast & flashes ---------- */
+#toast{position:fixed; left:50%; bottom:26px; transform:translateX(-50%) translateY(20px);
+  background:var(--ink); color:var(--cream); font-size:13px; padding:10px 18px; border-radius:24px;
+  opacity:0; transition:all .3s ease; z-index:100; pointer-events:none; max-width:88vw; text-align:center;}
+#toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
+#bingo-flash{position:fixed; inset:0; display:flex; align-items:center; justify-content:center;
+  z-index:90; pointer-events:none; opacity:0;}
+#bingo-flash.show{animation:bingoin 1.6s ease forwards;}
+#bingo-flash .inner{text-align:center; background:var(--card); border:4px solid var(--coral);
+  border-radius:16px; padding:22px 34px; box-shadow:6px 6px 0 rgba(23,73,79,.25);}
+#bingo-flash .big{font-family:"Press Start 2P","Courier New",monospace; font-size:26px; color:var(--coral2);}
+#bingo-flash .sub{font-size:14px; margin-top:10px; font-weight:700;}
+@keyframes bingoin{0%{opacity:0; transform:scale(.7);} 15%{opacity:1; transform:scale(1.05);}
+  25%{transform:scale(1);} 80%{opacity:1;} 100%{opacity:0; transform:scale(1);}}
+
+/* ---------- overlays ---------- */
+.overlay{position:fixed; inset:0; background:rgba(23,73,79,.55); z-index:80;
+  display:flex; align-items:center; justify-content:center; padding:20px;}
+.overlay-card{background:var(--cream); border:4px solid var(--ink); border-radius:16px;
+  max-width:440px; width:100%; padding:22px 18px; text-align:center; max-height:92vh; overflow-y:auto;
+  box-shadow:8px 8px 0 rgba(0,0,0,.2);}
+.overlay-card h2{font-size:16px; margin:0 0 6px;}
+.overlay-card h2.coral{color:var(--coral2);}
+.overlay-card p{font-size:13.5px; line-height:1.7; color:#3d5457;}
+.final-score{font-family:"Press Start 2P","Courier New",monospace; font-size:20px; margin:10px 0;}
+#win-bingo{margin:12px auto; max-width:300px;}
+#win-bingo .bingo-grid-clone{display:grid; grid-template-columns:repeat(3,1fr); gap:5px;}
+#win-bingo .bingo-label,#win-bingo .bingo-count{display:none;}
+.overlay-card .btn{margin:6px 4px 0;}
+.tiny{font-size:11px; color:#8a9a9c; margin-top:10px;}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ============ MENU ============ -->
+  <section id="screen-menu">
+    <div class="game-logo">
+      <span class="coral">✚</span> SHANGHAI<br>BINGO MATCH <span class="coral">✚</span>
+    </div>
+    <p class="tagline">Match the city. Stamp your bingo card.</p>
+    <p class="tagline-cn">上海宾果消消乐 · 边玩边攒上海打卡清单</p>
+    <div class="howto">
+      🖱️ <b>Swap</b> adjacent tiles to match 3+ / 点击或滑动交换相邻贴纸，3连即消<br>
+      ⭐ Match <b>4</b> to forge a star bomb (tap it to blast 3×3) / 4连消获得星星炸弹<br>
+      🎯 Clear <b>6</b> of a kind to stamp its bingo square — complete a line for <b>+5 moves</b> / 集齐6个盖章，连成一线奖励5步
+    </div>
+    <div id="theme-list"></div>
+    <div class="menu-foot">Made for <a href="https://gochinamate.com">ChinaMate</a> · how China gets done, one match at a time</div>
+  </section>
+
+  <!-- ============ GAME ============ -->
+  <section id="screen-game" class="hidden">
+    <div id="hud">
+      <div class="hud-box"><div class="hud-label">SCORE 分数</div><div class="hud-val" id="hud-score">0</div></div>
+      <div class="hud-box"><div class="hud-label">TARGET 目标</div><div class="hud-val" id="hud-target">1800</div></div>
+      <div class="hud-box"><div class="hud-label">MOVES 步数</div><div class="hud-val" id="hud-moves">30</div></div>
+      <button class="icon-btn" id="btn-mute" title="sound">🔊</button>
+    </div>
+    <div id="board-wrap">
+      <div id="board"></div>
+      <div class="combo-flash" id="combo-flash"></div>
+    </div>
+    <div id="bingo-panel">
+      <div class="bingo-title">🎯 BINGO CARD <span>宾果卡</span> — clear 6 of a kind to stamp</div>
+      <div id="bingo-grid"></div>
+      <div class="bingo-hint">Complete any row / column / diagonal for <b>+5 moves</b><br>横竖斜连成一线，奖励5步</div>
+    </div>
+    <div style="text-align:center; margin-top:10px;">
+      <button class="btn ghost" id="btn-quit" style="font-size:11px; padding:9px 16px;">← LEVELS 选关</button>
+    </div>
+  </section>
+</div>
+
+<div id="toast"></div>
+<div id="bingo-flash"><div class="inner"><div class="big">BINGO!</div><div class="sub">宾果！ +5 MOVES 步数</div></div></div>
+
+<!-- ============ WIN ============ -->
+<div id="screen-win" class="overlay hidden">
+  <div class="overlay-card">
+    <h2 class="coral px">YOU WIN! 🎉</h2>
+    <p>通关！Your Shanghai bingo card:<br>这是你打下的上海：</p>
+    <div id="win-bingo"></div>
+    <div class="final-score" id="win-score">0</div>
+    <a class="btn teal" href="https://gochinamate.com">EXPLORE THE REAL SHANGHAI GUIDE<br><span style="font-size:11px;">探索真实上海攻略 →</span></a><br>
+    <button class="btn" id="btn-again">PLAY AGAIN 再玩一次</button>
+  </div>
+</div>
+
+<!-- ============ LOSE ============ -->
+<div id="screen-lose" class="overlay hidden">
+  <div class="overlay-card">
+    <h2 class="px">OUT OF MOVES</h2>
+    <p>步数用完了，再试一次吧！<br>Final score: <b id="lose-score">0</b></p>
+    <button class="btn" id="btn-retry">TRY AGAIN 重试</button><br>
+    <button class="btn ghost" id="btn-levels2" style="font-size:11px;">← LEVELS 选关</button>
+  </div>
+</div>
+
+<script>
+'use strict';
+/* ================================================================
+   SHANGHAI BINGO MATCH — single-file HTML5 match-3
+   Pure game logic is DOM-free and exported for headless testing.
+   ================================================================ */
+
+/* ---------------- config ---------------- */
+const ROWS = 8, COLS = 8, NTYPES = 9;
+const MOVES_PER_LEVEL = 30;
+const TARGET_SCORE = 1800;
+const BINGO_THRESHOLD = 6;
+const BINGO_BONUS_MOVES = 5;
+const SCORE_3 = 60, SCORE_4 = 120, SCORE_5 = 200, SCORE_STAR_TILE = 40;
+const SWAP_MS = 200, POP_MS = 260, FALL_MS = 300;
+
+const THEMES = {
+  classics: {
+    name:'Shanghai Classics', cn:'魔都初体验',
+    desc:'The Bund, the metro, the skyline — match 9 Shanghai icons.',
+    tiles:[
+      {key:'classics_0', en:'Walk the Bund',        short:'The Bund',   cn:'漫步外滩'},
+      {key:'classics_1', en:'Spot the Pearl Tower', short:'Pearl Tower',cn:'寻找东方明珠'},
+      {key:'classics_2', en:'Explore Yuyuan',       short:'Yuyuan',     cn:'游览豫园'},
+      {key:'classics_3', en:'Stroll Nanjing Road',  short:'Nanjing Rd', cn:'走走南京路'},
+      {key:'classics_4', en:'Ride the Metro',       short:'Metro',      cn:'搭一次地铁'},
+      {key:'classics_5', en:'Cross the Huangpu',    short:'Ferry',      cn:'坐渡轮过黄浦江'},
+      {key:'classics_6', en:'Visit a Museum',       short:'Museum',     cn:'逛一座博物馆'},
+      {key:'classics_7', en:'Find a Shikumen',       short:'Shikumen',   cn:'寻找石库门'},
+      {key:'classics_8', en:'See the Skyline',       short:'Skyline',    cn:'欣赏魔都天际线'}
+    ]
+  },
+  taste: {
+    name:'A Taste of Shanghai', cn:'上海吃货打卡',
+    desc:'Xiaolongbao to hongshao rou — a delicious match-3.',
+    tiles:[
+      {key:'taste_0', en:'Try Xiaolongbao',      short:'Xiaolongbao', cn:'尝尝小笼包'},
+      {key:'taste_1', en:'Bite into Shengjian',  short:'Shengjian',   cn:'咬一口生煎'},
+      {key:'taste_2', en:'Eat Scallion Noodles', short:'Scallion Noodles', cn:'吃碗葱油拌面'},
+      {key:'taste_3', en:'Try Soup Wontons',     short:'Wontons',     cn:'来碗小馄饨'},
+      {key:'taste_4', en:'Taste Hongshao Rou',   short:'Hongshao Rou',cn:'尝尝红烧肉'},
+      {key:'taste_5', en:'Grab a Rice Roll',     short:'Rice Roll',   cn:'买个粢饭团'},
+      {key:'taste_6', en:'Try Crab-shell Pastry',short:'Crab Pastry', cn:'尝尝蟹壳黄'},
+      {key:'taste_7', en:'Sip a Local Coffee',   short:'Coffee',      cn:'喝杯街角咖啡'},
+      {key:'taste_8', en:'Share a Local Meal',   short:'Local Meal',  cn:'分享一餐本帮菜'}
+    ]
+  },
+  slowdays: {
+    name:'Slow Days in Shanghai', cn:'上海慢游日记',
+    desc:'Laneways, bookshops, riverside sunsets — slow down, match up.',
+    tiles:[
+      {key:'slowdays_0', en:'Wander Wukang Road',     short:'Wukang Rd',  cn:'漫步武康路'},
+      {key:'slowdays_1', en:'Stroll Under Plane Trees',short:'Plane Trees',cn:'走过梧桐树荫'},
+      {key:'slowdays_2', en:'Browse a Bookshop',      short:'Bookshop',   cn:'逛一家书店'},
+      {key:'slowdays_3', en:'Find a Laneway',         short:'Laneway',    cn:'探索一条弄堂'},
+      {key:'slowdays_4', en:'Walk Suzhou Creek',      short:'Suzhou Creek',cn:'沿苏州河散步'},
+      {key:'slowdays_5', en:'Explore a Local Market', short:'Wet Market', cn:'逛逛菜市场'},
+      {key:'slowdays_6', en:'Relax in a Park',        short:'Park',       cn:'在公园歇一会'},
+      {key:'slowdays_7', en:'Send a Postcard',        short:'Postcard',   cn:'寄一张明信片'},
+      {key:'slowdays_8', en:'Catch a Riverside Sunset',short:'Sunset',    cn:'看一场江边日落'}
+    ]
+  }
+};
+const BINGO_LINES = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+
+/* ---------------- tiny audio (WebAudio, no assets) ---------------- */
+const AudioSys = {
+  ctx:null, muted:false,
+  ensure(){ try{
+    if(!this.ctx) this.ctx = new (window.AudioContext||window.webkitAudioContext)();
+    if(this.ctx.state==='suspended') this.ctx.resume();
+  }catch(e){} },
+  tone(f,d,type,v,delay){ if(this.muted||!this.ctx) return;
+    try{
+      type=type||'square'; v=v||0.10; delay=delay||0;
+      const t0=this.ctx.currentTime+delay;
+      const o=this.ctx.createOscillator(), g=this.ctx.createGain();
+      o.type=type; o.frequency.value=f;
+      g.gain.setValueAtTime(0.0001,t0);
+      g.gain.linearRampToValueAtTime(v,t0+0.012);
+      g.gain.exponentialRampToValueAtTime(0.0001,t0+d);
+      o.connect(g); g.connect(this.ctx.destination);
+      o.start(t0); o.stop(t0+d+0.05);
+    }catch(e){}
+  },
+  click(){ this.tone(620,0.06); },
+  select(){ this.tone(520,0.07,'triangle',0.08); },
+  swap(){ this.tone(300,0.08,'triangle',0.10); this.tone(430,0.08,'triangle',0.10,0.06); },
+  bad(){ this.tone(170,0.14,'sawtooth',0.07); },
+  match(c){ const b=[523,659,784,1047,1319]; const n=Math.min(2+c,5);
+    for(let i=0;i<n;i++) this.tone(b[i],0.12,'square',0.09,i*0.06); },
+  star(){ const f=[880,1175,1568]; for(let i=0;i<3;i++) this.tone(f[i],0.16,'sine',0.11,i*0.07); },
+  blast(){ this.tone(140,0.32,'sawtooth',0.13); this.tone(85,0.4,'square',0.09,0.05); },
+  bingo(){ const f=[523,659,784,1047,1319]; for(let i=0;i<5;i++) this.tone(f[i],0.16,'square',0.10,i*0.085); },
+  win(){ const f=[523,659,784,1047,784,1047,1319,1568]; for(let i=0;i<8;i++) this.tone(f[i],0.18,'square',0.10,i*0.11); },
+  lose(){ const f=[392,330,262,196]; for(let i=0;i<4;i++) this.tone(f[i],0.22,'triangle',0.10,i*0.13); }
+};
+
+/* ================================================================
+   PURE LOGIC (no DOM) — exported for headless tests
+   ================================================================ */
+let __tileSeq = 0;
+function mkTile(t, star){ return { t:t, star:!!star, el:null, id:++__tileSeq }; }
+function cellKey(r,c){ return r*COLS+c; }
+
+function findMatches(g){
+  const runs=[];
+  for(let r=0;r<ROWS;r++){ let c=0;
+    while(c<COLS){ const t=g[r][c].t; let len=1;
+      while(c+len<COLS && g[r][c+len].t===t) len++;
+      if(len>=3){ const cells=[]; for(let i=0;i<len;i++) cells.push([r,c+i]);
+        runs.push({cells:cells,len:len,dir:'h'}); }
+      c+=len; } }
+  for(let c=0;c<COLS;c++){ let r=0;
+    while(r<ROWS){ const t=g[r][c].t; let len=1;
+      while(r+len<ROWS && g[r+len][c].t===t) len++;
+      if(len>=3){ const cells=[]; for(let i=0;i<len;i++) cells.push([r+i,c]);
+        runs.push({cells:cells,len:len,dir:'v'}); }
+      r+=len; } }
+  return runs;
+}
+function swapTypes(g,r1,c1,r2,c2){ const a=g[r1][c1].t; g[r1][c1].t=g[r2][c2].t; g[r2][c2].t=a; }
+function matchAtCell(g,r,c){
+  const t=g[r][c].t; let h=1,v=1,i;
+  for(i=c-1;i>=0&&g[r][i].t===t;i--)h++;
+  for(i=c+1;i<COLS&&g[r][i].t===t;i++)h++;
+  for(i=r-1;i>=0&&g[i][c].t===t;i--)v++;
+  for(i=r+1;i<ROWS&&g[i][c].t===t;i++)v++;
+  return h>=3||v>=3;
+}
+function isValidSwap(g,r1,c1,r2,c2){
+  if(g[r1][c1].star||g[r2][c2].star) return true; // star swap always fires
+  swapTypes(g,r1,c1,r2,c2);
+  const ok = matchAtCell(g,r1,c1)||matchAtCell(g,r2,c2);
+  swapTypes(g,r1,c1,r2,c2);
+  return ok;
+}
+function hasValidMove(g){
+  for(let r=0;r<ROWS;r++) for(let c=0;c<COLS;c++){
+    if(c+1<COLS && isValidSwap(g,r,c,r,c+1)) return true;
+    if(r+1<ROWS && isValidSwap(g,r,c,r+1,c)) return true;
+  }
+  return false;
+}
+function createBoard(rng){
+  rng = rng || Math.random;
+  for(let attempt=0; attempt<300; attempt++){
+    const g=[];
+    for(let r=0;r<ROWS;r++){ g.push([]);
+      for(let c=0;c<COLS;c++){
+        let t, guard=0;
+        do { t=(rng()*NTYPES)|0; guard++; }
+        while(guard<60 && (
+          (c>=2 && g[r][c-1].t===t && g[r][c-2].t===t) ||
+          (r>=2 && g[r-1][c].t===t && g[r-2][c].t===t) ));
+        g[r].push(mkTile(t));
+      } }
+    if(findMatches(g).length===0 && hasValidMove(g)) return g;
+  }
+  return null; // practically unreachable
+}
+/* Collect the full clear set for a list of matches.
+   - runs of len>=4 birth a star (cell excluded from clear)
+   - any star tile inside the clear set detonates its 3x3 (chained) */
+function collectClearSet(g, matches, preferCells){
+  const map=new Map();
+  const add=function(r,c,blast){ if(r<0||r>=ROWS||c<0||c>=COLS) return;
+    const k=cellKey(r,c);
+    if(!map.has(k)) map.set(k,{r:r,c:c,blast:!!blast}); };
+  const starCreates=[];
+  for(const m of matches){
+    let cells=m.cells.slice();
+    if(m.len>=4){
+      let pick=null;
+      if(preferCells) for(const pc of preferCells){
+        if(cells.some(function(rc){return rc[0]===pc[0]&&rc[1]===pc[1];})){ pick=pc; break; }
+      }
+      if(!pick) pick=cells[(cells.length/2)|0];
+      starCreates.push({r:pick[0],c:pick[1],t:g[pick[0]][pick[1]].t});
+      cells=cells.filter(function(rc){return !(rc[0]===pick[0]&&rc[1]===pick[1]);});
+    }
+    cells.forEach(function(rc){ add(rc[0],rc[1],false); });
+  }
+  let expanded=true; const blasted={};
+  while(expanded){ expanded=false;
+    const cur=Array.from(map.values());
+    for(const o of cur){ const k=cellKey(o.r,o.c);
+      if(g[o.r][o.c].star && !blasted[k]){ blasted[k]=1;
+        for(let dr=-1;dr<=1;dr++) for(let dc=-1;dc<=1;dc++){
+          const r=o.r+dr,c=o.c+dc, kk=cellKey(r,c);
+          if(r>=0&&r<ROWS&&c>=0&&c<COLS&&!map.has(kk)){ add(r,c,true); expanded=true; }
+        } } } }
+  const clear=Array.from(map.values());
+  const clearKeys={}; clear.forEach(function(o){ clearKeys[cellKey(o.r,o.c)]=1; });
+  const births=starCreates.filter(function(s){ return !clearKeys[cellKey(s.r,s.c)]; });
+  return {clear:clear, starCreates:births};
+}
+/* Gravity: compact each column, spawn fresh tiles on top. Mutates g in place. */
+function computeCollapse(g, clearList, rng){
+  rng = rng || Math.random;
+  const gone={}; clearList.forEach(function(o){ gone[cellKey(o.r,o.c)]=1; });
+  const moves=[], spawns=[];
+  for(let c=0;c<COLS;c++){
+    let write=ROWS-1;
+    for(let r=ROWS-1;r>=0;r--){
+      if(!gone[cellKey(r,c)]){
+        const tile=g[r][c];
+        if(write!==r){ moves.push({tile:tile,fr:r,fc:c,tr:write,tc:c}); g[write][c]=tile; }
+        write--;
+      }
+    }
+    let k=0;
+    for(let r=write;r>=0;r--){
+      const tile=mkTile((rng()*NTYPES)|0);
+      g[r][c]=tile; k++;
+      spawns.push({tile:tile,r:r,c:c,fromK:k});
+    }
+  }
+  return {moves:moves, spawns:spawns};
+}
+function shuffleTiles(g, rng){
+  rng = rng || Math.random;
+  const all=[];
+  for(let r=0;r<ROWS;r++) for(let c=0;c<COLS;c++) all.push(g[r][c]);
+  for(let i=all.length-1;i>0;i--){ const j=(rng()*(i+1))|0; const t=all[i]; all[i]=all[j]; all[j]=t; }
+  let k=0;
+  for(let r=0;r<ROWS;r++) for(let c=0;c<COLS;c++) g[r][c]=all[k++];
+}
+if(typeof module!=='undefined' && module.exports){
+  module.exports={ ROWS:ROWS, COLS:COLS, NTYPES:NTYPES,
+    mkTile:mkTile, findMatches:findMatches, swapTypes:swapTypes,
+    matchAtCell:matchAtCell, isValidSwap:isValidSwap, hasValidMove:hasValidMove,
+    createBoard:createBoard, collectClearSet:collectClearSet,
+    computeCollapse:computeCollapse, shuffleTiles:shuffleTiles };
+}
+
+/* ================================================================
+   GAME LAYER (DOM)
+   ================================================================ */
+function el(id){ return document.getElementById(id); }
+function wait(ms){ return new Promise(function(res){ setTimeout(res, ms); }); }
+
+const G = {
+  themeKey:null, theme:null, grid:null,
+  score:0, moves:0, busy:false, over:false,
+  selected:null, clearedByType:[], stamped:[], bingoLines:null,
+  tilePx:0, epoch:0
+};
+function alive(ep){ return ep===G.epoch; }
+function newState(){
+  G.score=0; G.moves=MOVES_PER_LEVEL; G.busy=false; G.over=false;
+  G.selected=null; G.clearedByType=[]; G.stamped=[];
+  for(let i=0;i<NTYPES;i++){ G.clearedByType.push(0); G.stamped.push(false); }
+  G.bingoLines={};
+}
+
+/* ---------- menu ---------- */
+function renderMenu(){
+  const list=el('theme-list'); list.innerHTML='';
+  Object.keys(THEMES).forEach(function(k){
+    const th=THEMES[k];
+    const card=document.createElement('div'); card.className='theme-card';
+    let prev='';
+    [0,4,8].forEach(function(i){ prev+='<img src="'+th.tiles[i].img+'" alt="'+th.tiles[i].en+'">'; });
+    card.innerHTML =
+      '<div class="theme-prev">'+prev+'</div>'+
+      '<div class="theme-name">'+th.name.toUpperCase()+'</div>'+
+      '<div class="theme-cn">'+th.cn+'</div>'+
+      '<div class="theme-desc">'+th.desc+'</div>'+
+      '<button class="btn" data-play="'+k+'">PLAY 开始 ▶</button>';
+    list.appendChild(card);
+  });
+  list.querySelectorAll('[data-play]').forEach(function(b){
+    b.addEventListener('click', function(){ AudioSys.ensure(); AudioSys.click(); startLevel(b.getAttribute('data-play')); });
+  });
+}
+
+/* ---------- level setup ---------- */
+function startLevel(key){
+  G.themeKey=key; G.theme=THEMES[key]; newState();
+  G.epoch++;
+  el('hud-target').textContent=TARGET_SCORE;
+  el('screen-menu').classList.add('hidden');
+  el('screen-win').classList.add('hidden');
+  el('screen-lose').classList.add('hidden');
+  el('screen-game').classList.remove('hidden');
+  renderBingo();
+  G.grid=createBoard();
+  renderBoardInstant();
+  updateHUD();
+  window.scrollTo(0,0);
+}
+function tileImg(i){ return G.theme.tiles[i].img; }
+
+/* ---------- board rendering ---------- */
+function measureTiles(){
+  const w=el('board').clientWidth;
+  G.tilePx=w/COLS;
+}
+function makeTileEl(tile){
+  const d=document.createElement('div');
+  d.className='tile'+(tile.star?' star':'');
+  const img=document.createElement('img');
+  img.src=G.theme.tiles[tile.t].img; img.alt=G.theme.tiles[tile.t].en; img.draggable=false;
+  d.appendChild(img);
+  if(tile.star){ const b=document.createElement('span'); b.className='star-badge'; b.textContent='★'; d.appendChild(b); }
+  tile.el=d;
+  return d;
+}
+function placeTile(tile,r,c,animate){
+  if(!tile.el) return;
+  if(!animate) tile.el.classList.add('no-anim');
+  tile.el.style.transform='translate('+(c*G.tilePx)+'px,'+(r*G.tilePx)+'px)';
+  if(!animate){ void tile.el.offsetWidth; tile.el.classList.remove('no-anim'); }
+}
+function renderBoardInstant(){
+  measureTiles();
+  const board=el('board'); board.innerHTML='';
+  for(let r=0;r<ROWS;r++) for(let c=0;c<COLS;c++){
+    const t=G.grid[r][c]; board.appendChild(makeTileEl(t)); placeTile(t,r,c,false);
+  }
+}
+function repositionAll(){
+  measureTiles();
+  for(let r=0;r<ROWS;r++) for(let c=0;c<COLS;c++) placeTile(G.grid[r][c],r,c,false);
+}
+window.addEventListener('resize', function(){ if(G.grid && !el('screen-game').classList.contains('hidden')) repositionAll(); });
+
+/* ---------- HUD / bingo panel ---------- */
+function updateHUD(){
+  el('hud-score').textContent=G.score;
+  const mv=el('hud-moves'); mv.textContent=G.moves;
+  mv.classList.toggle('low', G.moves<=5);
+}
+function renderBingo(){
+  const p=el('bingo-grid'); p.innerHTML='';
+  for(let i=0;i<NTYPES;i++){
+    const t=G.theme.tiles[i];
+    const cell=document.createElement('div');
+    cell.className='bingo-cell'; cell.id='bingo-'+i;
+    cell.innerHTML='<img src="'+t.img+'" alt="'+t.en+'">'+
+      '<div class="bingo-label">'+t.short+'</div>'+
+      '<div class="bingo-count">0/'+BINGO_THRESHOLD+'</div>'+
+      '<div class="bingo-stamp">✓</div>';
+    p.appendChild(cell);
+  }
+}
+function updateBingo(){
+  let changed=false;
+  for(let i=0;i<NTYPES;i++){
+    const cell=el('bingo-'+i); if(!cell) continue;
+    cell.querySelector('.bingo-count').textContent=Math.min(G.clearedByType[i],BINGO_THRESHOLD)+'/'+BINGO_THRESHOLD;
+    if(!G.stamped[i] && G.clearedByType[i]>=BINGO_THRESHOLD){
+      G.stamped[i]=true; cell.classList.add('stamped'); changed=true;
+    }
+  }
+  if(changed) checkBingoLines();
+}
+function checkBingoLines(){
+  BINGO_LINES.forEach(function(L){
+    const k=L.join('');
+    if(!G.bingoLines[k] && L.every(function(i){return G.stamped[i];})){
+      G.bingoLines[k]=1; G.moves+=BINGO_BONUS_MOVES;
+      AudioSys.bingo(); bingoFlash();
+      L.forEach(function(i){ const c=el('bingo-'+i); if(c) c.classList.add('bingo-line'); });
+    }
+  });
+  updateHUD();
+}
+function bingoFlash(){
+  const f=el('bingo-flash');
+  f.classList.remove('show'); void f.offsetWidth; f.classList.add('show');
+}
+let toastTimer=null;
+function toast(msg){
+  const t=el('toast'); t.textContent=msg; t.classList.add('show');
+  clearTimeout(toastTimer); toastTimer=setTimeout(function(){ t.classList.remove('show'); },1800);
+}
+function floatScore(r,c,text){
+  const b=el('board');
+  const d=document.createElement('div'); d.className='float-score'; d.textContent=text;
+  d.style.left=((c+0.5)*G.tilePx-14)+'px'; d.style.top=(r*G.tilePx+6)+'px';
+  b.appendChild(d); setTimeout(function(){ if(d.parentNode) d.parentNode.removeChild(d); },950);
+}
+function comboFlash(n){
+  if(n<2) return;
+  const f=el('combo-flash'); f.textContent='COMBO ×'+n;
+  f.classList.remove('show'); void f.offsetWidth; f.classList.add('show');
+}
+
+/* ---------- selection & input ---------- */
+function deselect(){
+  if(G.selected){ const t=G.grid[G.selected[0]][G.selected[1]];
+    if(t.el) t.el.classList.remove('selected'); }
+  G.selected=null;
+}
+function selectCell(r,c){
+  deselect();
+  G.selected=[r,c];
+  G.grid[r][c].el.classList.add('selected');
+  AudioSys.select();
+}
+function adjacent(a,b){ return Math.abs(a[0]-b[0])+Math.abs(a[1]-b[1])===1; }
+function cellFromEvent(e){
+  const rect=el('board').getBoundingClientRect();
+  const x=e.clientX-rect.left, y=e.clientY-rect.top;
+  const c=Math.floor(x/G.tilePx), r=Math.floor(y/G.tilePx);
+  if(r<0||r>=ROWS||c<0||c>=COLS) return null;
+  return [r,c];
+}
+function handleTap(cell){
+  if(!cell) return;
+  const r=cell[0], c=cell[1];
+  if(G.selected && G.selected[0]===r && G.selected[1]===c){ deselect(); return; }
+  if(G.selected && adjacent(G.selected,cell)){
+    const s=G.selected; deselect(); trySwap(s[0],s[1],r,c);
+  } else selectCell(r,c);
+}
+function bindBoardInput(){
+  const board=el('board');
+  let drag=null;
+  board.addEventListener('pointerdown', function(e){
+    AudioSys.ensure();
+    if(G.busy||G.over) return;
+    const cell=cellFromEvent(e);
+    if(!cell) return;
+    drag={cell:cell,x:e.clientX,y:e.clientY,active:true};
+    e.preventDefault();
+  });
+  board.addEventListener('pointermove', function(e){
+    if(!drag||!drag.active||G.busy||G.over) return;
+    const dx=e.clientX-drag.x, dy=e.clientY-drag.y;
+    if(Math.hypot(dx,dy)>26){
+      drag.active=false;
+      const d = Math.abs(dx)>Math.abs(dy) ? [0,dx>0?1:-1] : [dy>0?1:-1,0];
+      const r=drag.cell[0]+d[0], c=drag.cell[1]+d[1];
+      deselect(); trySwap(drag.cell[0],drag.cell[1],r,c);
+    }
+  });
+  const cancel=function(e){
+    if(drag&&drag.active&&!G.busy&&!G.over) handleTap(drag.cell);
+    drag=null;
+  };
+  board.addEventListener('pointerup', cancel);
+  board.addEventListener('pointercancel', function(){ drag=null; });
+  board.addEventListener('contextmenu', function(e){ e.preventDefault(); });
+}
+
+/* ---------- turn engine ---------- */
+function swapObjs(r1,c1,r2,c2){
+  const t=G.grid[r1][c1]; G.grid[r1][c1]=G.grid[r2][c2]; G.grid[r2][c2]=t;
+}
+function positionBoth(r1,c1,r2,c2){
+  placeTile(G.grid[r1][c1],r1,c1,true);
+  placeTile(G.grid[r2][c2],r2,c2,true);
+}
+async function trySwap(r1,c1,r2,c2){
+  if(G.busy||G.over) return;
+  if(r2<0||r2>=ROWS||c2<0||c2>=COLS) return;
+  const ep=G.epoch;
+  const A=G.grid[r1][c1], B=G.grid[r2][c2];
+  const starSwap = A.star || B.star;
+  if(!starSwap){
+    swapTypes(G.grid,r1,c1,r2,c2);
+    const ok = matchAtCell(G.grid,r1,c1)||matchAtCell(G.grid,r2,c2);
+    swapTypes(G.grid,r1,c1,r2,c2);
+    if(!ok){
+      G.busy=true;
+      try{
+        swapObjs(r1,c1,r2,c2); positionBoth(r1,c1,r2,c2);
+        AudioSys.bad(); await wait(SWAP_MS);
+        if(!alive(ep)) return;
+        swapObjs(r1,c1,r2,c2); positionBoth(r1,c1,r2,c2);
+        await wait(SWAP_MS);
+      } finally { if(alive(ep)) G.busy=false; }
+      return;
+    }
+  }
+  G.busy=true;
+  try{
+    G.moves--; updateHUD(); AudioSys.swap();
+    swapObjs(r1,c1,r2,c2); positionBoth(r1,c1,r2,c2);
+    await wait(SWAP_MS);
+    if(!alive(ep)) return;
+    if(starSwap){
+      const sr = A.star ? r2 : r1, sc = A.star ? c2 : c1;
+      await triggerStarBlast(sr,sc,ep);
+    } else {
+      await resolveCascades([[r1,c1],[r2,c2]],ep);
+    }
+    if(!alive(ep)) return;
+    afterTurn();
+  } finally { if(alive(ep)) G.busy=false; }
+}
+
+async function runClearStep(clear, starCreates, matches, combo, ep){
+  if(!clear.length) return 0;
+  let gained=0;
+  matches.forEach(function(m){ gained += (m.len<=3?SCORE_3 : m.len===4?SCORE_4 : SCORE_5)*combo; });
+  const blastN=clear.filter(function(o){return o.blast;}).length;
+  gained += blastN*SCORE_STAR_TILE*combo;
+  G.score+=gained;
+  clear.forEach(function(o){ G.clearedByType[G.grid[o.r][o.c].t]++; });
+  if(blastN>0) AudioSys.blast(); else AudioSys.match(combo);
+  comboFlash(combo);
+  clear.forEach(function(o){ const t=G.grid[o.r][o.c]; if(t.el) t.el.classList.add('popping'); });
+  starCreates.forEach(function(s){
+    const tile=G.grid[s.r][s.c]; tile.star=true;
+    if(tile.el){ tile.el.classList.add('star');
+      const b=document.createElement('span'); b.className='star-badge born'; b.textContent='★';
+      tile.el.appendChild(b); }
+    AudioSys.star();
+  });
+  updateHUD();
+  if(gained>0 && clear.length){
+    let sr=0,sc=0; clear.forEach(function(o){sr+=o.r;sc+=o.c;});
+    floatScore(Math.round(sr/clear.length), Math.round(sc/clear.length), '+'+gained);
+  }
+  await wait(POP_MS);
+  if(!alive(ep)) return 0;
+  clear.forEach(function(o){ const t=G.grid[o.r][o.c];
+    if(t.el&&t.el.parentNode) t.el.parentNode.removeChild(t.el); t.el=null; });
+  const res=computeCollapse(G.grid, clear, Math.random);
+  res.moves.forEach(function(m){ placeTile(m.tile,m.tr,m.tc,true); });
+  const board=el('board');
+  res.spawns.forEach(function(s){
+    const d=makeTileEl(s.tile); board.appendChild(d);
+    d.classList.add('no-anim');
+    d.style.transform='translate('+(s.c*G.tilePx)+'px,'+(-(s.fromK)*G.tilePx)+'px)';
+    void d.offsetWidth; d.classList.remove('no-anim');
+    placeTile(s.tile,s.r,s.c,true);
+  });
+  await wait(FALL_MS);
+  if(!alive(ep)) return 0;
+  updateBingo();
+  return gained;
+}
+
+async function resolveCascades(prefer, ep){
+  let combo=0;
+  while(true){
+    if(!alive(ep)) return;
+    const matches=findMatches(G.grid);
+    if(!matches.length) break;
+    combo++;
+    const cs=collectClearSet(G.grid, matches, prefer); prefer=null;
+    await runClearStep(cs.clear, cs.starCreates, matches, combo, ep);
+  }
+}
+
+async function triggerStarBlast(sr,sc,ep){
+  const fake=[{cells:[[sr,sc]],len:1,dir:'h'}];
+  const cs=collectClearSet(G.grid, fake, null);
+  await runClearStep(cs.clear, cs.starCreates, [], 1, ep);
+  if(!alive(ep)) return;
+  await resolveCascades(null, ep);
+}
+
+async function reshuffle(){
+  const ep=G.epoch;
+  toast('No moves left — reshuffling! 没有可行的步数，重新洗牌！');
+  for(let attempt=0; attempt<120; attempt++){
+    shuffleTiles(G.grid, Math.random);
+    if(findMatches(G.grid).length===0 && hasValidMove(G.grid)) break;
+  }
+  if(!alive(ep)) return;
+  repositionAll();
+  await wait(250);
+}
+
+function afterTurn(){
+  updateHUD();
+  if(G.score>=TARGET_SCORE){ doWin(); return; }
+  if(G.moves<=0){ doLose(); return; }
+  if(!hasValidMove(G.grid)){ reshuffle(); }
+}
+
+function doWin(){
+  G.over=true; AudioSys.win();
+  el('win-score').textContent=G.score+' PTS';
+  const wb=el('win-bingo');
+  wb.innerHTML='<div class="bingo-grid-clone">'+
+    el('bingo-grid').innerHTML.replace(/id="bingo-/g,'data-x="bingo-')+'</div>';
+  el('screen-win').classList.remove('hidden');
+}
+function doLose(){
+  G.over=true; AudioSys.lose();
+  el('lose-score').textContent=G.score;
+  el('screen-lose').classList.remove('hidden');
+}
+
+/* ---------- buttons & init ---------- */
+function bindUI(){
+  el('btn-mute').addEventListener('click', function(){
+    AudioSys.ensure();
+    AudioSys.muted=!AudioSys.muted;
+    el('btn-mute').textContent=AudioSys.muted?'🔇':'🔊';
+  });
+  const toMenu=function(){ AudioSys.click();
+    el('screen-game').classList.add('hidden');
+    el('screen-win').classList.add('hidden');
+    el('screen-lose').classList.add('hidden');
+    el('screen-menu').classList.remove('hidden');
+    window.scrollTo(0,0);
+  };
+  el('btn-quit').addEventListener('click', toMenu);
+  el('btn-levels2').addEventListener('click', toMenu);
+  el('btn-again').addEventListener('click', function(){ AudioSys.click(); startLevel(G.themeKey); });
+  el('btn-retry').addEventListener('click', function(){ AudioSys.click(); startLevel(G.themeKey); });
+  document.addEventListener('pointerdown', function(){ AudioSys.ensure(); }, {once:true});
+}
+function initGame(){
+  renderMenu();
+  bindUI();
+  bindBoardInput();
+}
+async function bootTiles(){
+  try{
+    const parts = await Promise.all(['tiles0.json','tiles1.json'].map(function(f){ return fetch(f).then(function(r){ return r.json(); }); }));
+    const t = Object.assign({}, parts[0], parts[1]);
+    Object.keys(THEMES).forEach(function(k){
+      THEMES[k].tiles.forEach(function(tile){ tile.img='data:image/png;base64,'+t[tile.key]; });
+    });
+  }catch(e){}
+  initGame();
+}
+document.addEventListener('DOMContentLoaded', bootTiles);
+</script>
+</body>
+</html>
